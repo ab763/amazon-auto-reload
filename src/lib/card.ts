@@ -5,14 +5,24 @@ export type Issuer = "Bank of America" | "BarclaycardUS";
 
 export class Card
 {
-	public set closingDate(newClosingDate: DateTime | undefined)
+	public set closingDate(newClosingDate: DateTime | string | undefined)
 	{
-		this._closingDate = newClosingDate;
-
 		if (newClosingDate === undefined)
 		{
+			this._closingDate = undefined;
+
 			// There's no point in doing anything further
 			return;
+		}
+
+		// Handle the case where we're loading the closing date from the config file
+		if (typeof newClosingDate === "string")
+		{
+			this._closingDate = DateTime.fromISO(newClosingDate);
+		}
+		else
+		{
+			this._closingDate = newClosingDate;
 		}
 
 		if (this.useBeforeCloseMaxDays)
@@ -33,30 +43,30 @@ export class Card
 
 	}
 
-	public get closingDate(): DateTime | undefined
+	public get closingDate(): DateTime | string | undefined
 	{
 		return this._closingDate;
 	}
 
 	public get closingDateAsString(): string
 	{
-		if (!this.closingDate)
+		if (!this._closingDate)
 		{
 			return "Unknown";
 		}
 
-		return this.closingDate.toISODate();
+		return this._closingDate.toISODate();
 	}
 
 	private get dontUseUntil(): DateTime
 	{
 		let dontUseCardUntil: DateTime = DateTime.fromSeconds(0);
 
-		if (this.closingDate !== undefined)
+		if (this._closingDate !== undefined)
 		{
 			if (this.useBeforeCloseMaxDays)
 			{
-				dontUseCardUntil = this.closingDate.minus({ days: this.useBeforeCloseMaxDays });
+				dontUseCardUntil = this._closingDate.minus({ days: this.useBeforeCloseMaxDays });
 			}
 		}
 		else
@@ -95,8 +105,10 @@ export class Card
 
 	public set reloadTimes(newReloadTimes: number)
 	{
-		validate(newReloadTimes, number().integer()
+		validate(newReloadTimes, number()
+			.integer()
 			.min(0));
+
 		this._reloadTimes = newReloadTimes;
 	}
 
@@ -150,7 +162,7 @@ export class Card
 
 	private _reloadTimes: number = 1;
 
-	public constructor(card: Card)
+	public constructor(card: Card, skipCardsWithTransactions: boolean)
 	{
 		this.cardholderName = card.cardholderName;
 		this.cardNumber = card.cardNumber;
@@ -164,8 +176,20 @@ export class Card
 		this.issuer = card.issuer;
 		this.closingDate = card.closingDate;
 		this.creditLimit = card.creditLimit;
-
 		this.skip = !card.enabled;
+
+		if (this.closingDate && this.closingDate <= DateTime.local())
+		{
+			this.transactionsFound = false;
+		}
+		else if
+		(skipCardsWithTransactions
+			&& card.closingDate
+			&& card.closingDate > DateTime.local()
+			&& card.transactionsFound)
+		{
+			card.skip = true;
+		}
 	}
 
 	public status(): string

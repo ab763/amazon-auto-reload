@@ -1,7 +1,6 @@
 import { By, Locator, ThenableWebDriver, until, WebElement } from "selenium-webdriver";
 
 import { Card } from "../lib/card";
-import { Cards } from "../lib/cards";
 import { logger } from "../lib/logger";
 import { ISiteConfig, Site } from "../lib/site";
 
@@ -36,11 +35,11 @@ export class Optimum extends Site implements IOptimumConfig
 		this.completeTransactions = completeTransactions;
 	}
 
-	public async makePurchases(cards: Cards): Promise<void>
+	public async makePurchases(cards: Card[]): Promise<void>
 	{
 		let eligibleCardFound: boolean = false;
 
-		for (const card of cards.cardsToRun())
+		for (const card of cards)
 		{
 			if (card.reloadAmount >= 1)
 			{
@@ -51,14 +50,12 @@ export class Optimum extends Site implements IOptimumConfig
 
 		if (!eligibleCardFound)
 		{
-			this.browser.driver.close();
-
 			return;
 		}
 
 		await this.login();
 
-		for (const card of cards.cardsToRun())
+		for (const card of cards)
 		{
 			while (card.reloadTimes > 0)
 			{
@@ -69,8 +66,10 @@ export class Optimum extends Site implements IOptimumConfig
 
 	private async login(): Promise<void>
 	{
+		this.buildBrowser();
+
 		// A driver alias so the code isn't *as* unwieldy
-		const driver: ThenableWebDriver = this.browser.driver;
+		const driver: ThenableWebDriver = this.driver;
 
 		await this.loadLoginPage();
 
@@ -102,7 +101,7 @@ export class Optimum extends Site implements IOptimumConfig
 	private async makePurchase(card: Card): Promise<void>
 	{
 		// A driver alias so the code isn't *as* unwieldy
-		const driver: ThenableWebDriver = this.browser.driver;
+		const driver: ThenableWebDriver = this.driver;
 
 		if (card.reloadAmount < 1)
 		{

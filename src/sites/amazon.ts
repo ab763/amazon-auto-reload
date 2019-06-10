@@ -3,7 +3,6 @@ import { strict as assert } from "assert";
 import { By, Locator, ThenableWebDriver, until, WebElement } from "selenium-webdriver";
 
 import { Card } from "../lib/card";
-import { Cards } from "../lib/cards";
 import { logger } from "../lib/logger";
 import { ISiteConfig, Site } from "../lib/site";
 
@@ -12,10 +11,10 @@ export interface IAmazonConfig extends ISiteConfig
 	readonly reloadDelayInSeconds?: number;
 }
 
-export class Amazon extends Site implements IAmazonConfig
+export class Amazon extends Site
 {
-	public readonly reloadDelayInSeconds: number;
 	private readonly completeTransactions: boolean;
+	private readonly reloadDelayInSeconds: number;
 
 	public constructor(amazonConfig: IAmazonConfig, completeTransactions: boolean)
 	{
@@ -27,25 +26,23 @@ export class Amazon extends Site implements IAmazonConfig
 			typeof amazonConfig.reloadDelayInSeconds === "undefined" ? 300 : amazonConfig.reloadDelayInSeconds;
 	}
 
-	public async reloadCards(cards: Cards): Promise<void>
+	public async reloadCards(cards: Card[]): Promise<void>
 	{
 
-		// A driver alias so the code isn't *as* unwieldy
-		const driver: ThenableWebDriver = this.browser.driver;
-
-		if (cards.cardArray.length === 0)
+		if (cards.length === 0)
 		{
 			logger.info("Skipping Amazon as all cards are marked to be skipped.");
-			this.browser.driver.close();
 
 			return;
 		}
 
 		await this.login();
+		// A driver alias so the code isn't *as* unwieldy
+		const driver: ThenableWebDriver = this.driver;
 
 		await driver.wait(until.titleIs("Reload Your Balance"));
 
-		for (const card of cards.cardsToRun())
+		for (const card of cards)
 		{
 			while (card.reloadTimes-- > 0)
 			{
@@ -58,7 +55,7 @@ export class Amazon extends Site implements IAmazonConfig
 	private async addCard(card: Card): Promise<void>
 	{
 		// A driver alias so the code isn't *as* unwieldy
-		const driver: ThenableWebDriver = this.browser.driver;
+		const driver: ThenableWebDriver = this.driver;
 
 		await driver.findElement(By.css(".a-size-base"))
 			.click();
@@ -86,8 +83,10 @@ export class Amazon extends Site implements IAmazonConfig
 
 	private async login(): Promise<void>
 	{
+		this.buildBrowser();
+
 		// A driver alias so the code isn't *as* unwieldy
-		const driver: ThenableWebDriver = this.browser.driver;
+		const driver: ThenableWebDriver = this.driver;
 
 		await this.loadLoginPage();
 
@@ -135,7 +134,7 @@ export class Amazon extends Site implements IAmazonConfig
 	private async reloadCard(card: Card): Promise<void>
 	{
 		// A driver alias so the code isn't *as* unwieldy
-		const driver: ThenableWebDriver = this.browser.driver;
+		const driver: ThenableWebDriver = this.driver;
 
 		const formattedMoney: string = formatMoney(card.reloadAmount, "");
 		const reloadURL: string = `https://smile.amazon.com/asv/reload/order?manualReload.amount=${formattedMoney}`;

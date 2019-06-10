@@ -1,32 +1,82 @@
+import { DateTime, Duration } from "luxon";
 import { ThenableWebDriver } from "selenium-webdriver";
+import { URL } from "url";
 
 import { Browser, BrowserType } from "./browser";
 
 export interface ISiteConfig
 {
+	readonly lastCompletedRun?: string;
 	readonly password: string;
+	readonly startingURL?: string;
 	readonly username: string;
 }
 
 export abstract class Site implements ISiteConfig {
 
-	public readonly browser: Browser;
-	public readonly password: string;
-	public readonly username: string;
-	protected readonly startingURL: URL;
-
-	public constructor(siteConfig: ISiteConfig, startingURL: string, browserType?: BrowserType)
+	public get driver(): ThenableWebDriver
 	{
-		this.startingURL = new URL(startingURL);
+		if (this.browser === undefined)
+		{
+			throw(Error);
+		}
+
+		return this.browser.driver;
+	}
+
+	public browser: Browser | undefined;
+	public readonly lastCompletedRun?: string;
+	public readonly password: string;
+	public readonly startingURL: string;
+	public readonly username: string;
+
+	public constructor(siteConfig: ISiteConfig, startingURL: string)
+	{
+		if (siteConfig.startingURL)
+		{
+			this.startingURL = siteConfig.startingURL;
+		}
+		else
+		{
+			this.startingURL = startingURL;
+		}
 		this.username = siteConfig.username;
 		this.password = siteConfig.password;
-		this.browser = new Browser(this.startingURL, browserType);
+		this.lastCompletedRun = siteConfig.lastCompletedRun;
+	}
+
+	public transferOutSubmittedInLastWeek(): boolean
+	{
+		// logger.debug(`lastCompletedRun ${lastCompletedRun}`);
+
+		if (!this.lastCompletedRun)
+		{
+			return false;
+		}
+
+		const lastCompletedRun: DateTime = DateTime.fromISO(this.lastCompletedRun);
+
+		// logger.debug(`lastCompletedRunDate: ${lastCompletedRun}`);
+
+		const today: DateTime = DateTime.local();
+
+		const timeSinceLastRun: Duration = today.diff(lastCompletedRun);
+
+		return (timeSinceLastRun.as("days") < 7);
+	}
+
+	protected buildBrowser(browserType?: BrowserType): void
+	{
+		if (!this.browser)
+		{
+			this.browser = new Browser(new URL(this.startingURL), this.username, browserType);
+		}
 	}
 
 	protected async loadLoginPage(): Promise<void>
 	{
 		// A driver alias so the code isn't *as* unwieldy
-		const driver: ThenableWebDriver = this.browser.driver;
+		const driver: ThenableWebDriver = this.driver;
 
 		const currentURL: string = await driver.getCurrentUrl();
 
@@ -38,7 +88,7 @@ export abstract class Site implements ISiteConfig {
 			// Chrome was supposed to start with a starting URL.
 			// It works on my Windows machine, but fails in my Docker Linux image.
 			// As such, handle that case as well.
-			await driver.get(this.startingURL.href);
+			await driver.get(this.startingURL);
 		}
 	}
 }

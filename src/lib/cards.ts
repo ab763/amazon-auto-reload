@@ -4,7 +4,7 @@ export class Cards
 {
 	public readonly cardArray: Card[];
 
-	public constructor(cards?: Card[])
+	public constructor(cards: Card[], skipCardsWithTransactions: boolean)
 	{
 		this.cardArray = new Array();
 
@@ -12,7 +12,7 @@ export class Cards
 		{
 			cards.forEach((card: Card) =>
 			{
-				this.cardArray.push(new Card(card));
+				this.cardArray.push(new Card(card, skipCardsWithTransactions));
 			});
 		}
 	}

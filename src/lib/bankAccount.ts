@@ -1,5 +1,10 @@
-// Consider merging this into the Site class?
 export class BankAccount {
+
+	public static lastFour(bankAccount: BankAccount): string
+	{
+		return bankAccount.accountNumber.slice(-4);
+	}
+
 	public readonly accountName: string;
 	public readonly accountNumber: string;
 
@@ -8,9 +13,4 @@ export class BankAccount {
 		this.accountName = bankAccount.accountName;
 		this.accountNumber = bankAccount.accountNumber;
 	}
-
-	public get lastFour(): string
-	{
-        return this.accountNumber.slice(-4);
-    }
 }

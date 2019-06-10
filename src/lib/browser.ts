@@ -7,6 +7,7 @@ import "chromedriver";
 import "geckodriver";
 import { Builder, Capabilities, ThenableWebDriver } from "selenium-webdriver";
 import { Options as ChromeOptions } from "selenium-webdriver/chrome";
+import { URL } from "url";
 
 import { logger } from "./logger";
 
@@ -16,7 +17,7 @@ export class Browser
 {
 	public readonly driver: ThenableWebDriver;
 
-	public constructor(startingURL: URL, browserType: BrowserType = "chrome", vpn: boolean = false)
+	public constructor(startingURL: URL, username: string, browserType: BrowserType = "chrome", vpn: boolean = false)
 	{
 		const chromeCapabilities: Capabilities = Capabilities.chrome();
 		const chromeOptions: ChromeOptions = new ChromeOptions();
@@ -29,9 +30,11 @@ export class Browser
 		if (vpn)
 		{
 			chromeOptions.addArguments("user-data-dir=.\\webdriver-browser-profiles\\chrome-vpn\\");
-		} else
+		}
+		else
 		{
-			chromeOptions.addArguments(`user-data-dir=.\\webdriver-browser-profiles\\chrome-${startingURL.hostname}\\`);
+			chromeOptions.
+				addArguments(`user-data-dir=.\\webdriver-browser-profiles\\chrome-${startingURL.hostname}-${username}\\`);
 		}
 
 		chromeOptions.addArguments(`homepage ${startingURL.href}`);

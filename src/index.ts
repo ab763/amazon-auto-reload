@@ -1,10 +1,14 @@
 import accounting from "accounting";
 import chalk from "chalk";
 import { readFileSync } from "fs";
+// import { writeFileSync } from "fs";
 import { Answers, prompt } from "inquirer";
 import { parse } from "json5";
+// import { stringify } from "json5";
+// import { DateTime } from "luxon";
 import { table } from "table";
 
+// import { BankAccount } from "./lib/bankAccount";
 import { Card } from "./lib/card";
 import { Cards } from "./lib/cards";
 // import { logger } from "./lib/logger";
@@ -14,10 +18,13 @@ import { Amazon } from "./sites/amazon";
 // import { CapitalOne } from "./sites/capitalOne";
 // import { Discover } from "./sites/discover";
 // import { Mango } from "./sites/mango";
+// import { Merrill } from "./sites/merrill";
 // import { Mint } from "./sites/mint";
 // import { Optimum } from "./sites/optimum";
 // import { PenFed } from "./sites/penFed";
+// import { PremierMembersCreditUnion } from "./sites/premierMembersCreditUnion";
 // import { USBank } from "./sites/usBank";
+// import { Wealthfront } from "./sites/wealthfront";
 
 // let bankOfAmerica: BankOfAmerica;
 // let barclaycardUS: BarclaycardUS;
@@ -26,6 +33,7 @@ import { Amazon } from "./sites/amazon";
 // let usBank: USBank;
 // let penFed: PenFed;
 // let capitalOne: CapitalOne;
+// let configModified: boolean = false;
 
 async function start(): Promise<void>
 {
@@ -33,40 +41,83 @@ async function start(): Promise<void>
 	const config = parse(readFileSync(configFilepath)
 		.toString());
 
-	const cards: Cards = new Cards(config.cards);
-
 	const completeTransactions: boolean =
 		(config.completeTransactions == undefined) ? true : config.completeTransactions;
 	const confirmBeforePurchases: boolean =
 		(config.confirmBeforePurchases == undefined) ? false : config.confirmBeforePurchases;
+	const skipCardsWithTransactions: boolean =
+		(config.skipCardsWithTransactions == undefined) ? false : config.skipCardsWithTransactions;
+
+	const cards: Cards = new Cards(config.cards, skipCardsWithTransactions);
 
 	// outputCardTable(cards.enabledCards(), "Before checking for card updates, cards that could be run");
 
-	// const mango: Mango = new Mango(config.mango);
-	// await mango.transferFundsToSecondAccount();
+	// const wealthfront: Wealthfront = new Wealthfront(config.wealthfront);
 
-	// for (const card of cards.enabledCards())
+	// const merrill: Merrill = new Merrill(config.merrill);
+	// if (!merrill.transferOutSubmittedInLastWeek())
 	// {
-	// 	await checkForCreditCardTransactions(card, config);
-	// }
-
-	// const premierMembersCreditUnion: PremierMembersCreditUnion =
-	// new PremierMembersCreditUnion(config.premierMembersCreditUnion, completeTransactions);
-	// await premierMembersCreditUnion.login();
-	// // premierMembersCreditUnion.transferFundsToSecondAccount();
-	// // const premierMembersCreditUnionBalanceToTransferOut =
-	// await premierMembersCreditUnion.howMuchToTransferOutOfBank();
-
-	// if (!isSiteCompletedInLastDay(config.merrill.lastCompletedRun))
-	// {
-	// 	const merrill: Merrill = new Merrill(config.merrill);
 	// 	await merrill.transferOutAvailableBalance();
 	// 	config.merrill.lastCompletedRun = now();
+	// 	config.configModified = true;
 	// 	updateConfigFile(configFilepath, config);
 	// }
 
-	// const mangoBalanceToTransferOut =
-	// await mango.howMuchToTransferFromSecondAccount();
+	// const premierMembersCreditUnion: PremierMembersCreditUnion =
+	// 	new PremierMembersCreditUnion(config.premierMembersCreditUnion);
+	// if (!premierMembersCreditUnion.transferOutSubmittedInLastWeek())
+	// {
+	// 	await premierMembersCreditUnion.transferFundsToSavings();
+	// 	const premierMembersCreditUnionBalanceToTransferOut =
+	// 		await premierMembersCreditUnion.howMuchToTransferOutOfBank();
+
+	// 	if (premierMembersCreditUnionBalanceToTransferOut > 0)
+	// 	{
+	// 		await wealthfront.transferFunds(
+	// 			new BankAccount({accountName: "", accountNumber: ""}),
+	// 			premierMembersCreditUnionBalanceToTransferOut);
+
+	// 		config.premierMembersCreditUnion.lastCompletedRun = now();
+	// 		configModified = true;
+	// 	}
+	// }
+
+	// const mango2: Mango = new Mango(config.mango2);
+	// if (!mango2.transferOutSubmittedInLastWeek())
+	// {
+	// 	const mango1: Mango = new Mango(config.mango1);
+	// 	await mango1.transferFundsToSecondAccount();
+	// 	const mangoBalanceToTransferOut =
+	// 		await mango2.howMuchToTransferFromSecondAccount();
+
+	// 	if (mangoBalanceToTransferOut > 0)
+	// 	{
+	// 		await wealthfront.transferFunds(
+	// 			new BankAccount({accountName: "Metropolitan Commercial Bank Checking", accountNumber: "2042100022716719"}),
+	// 			mangoBalanceToTransferOut);
+
+	// 		config.mango2.lastCompletedRun = now();
+	// 		configModified = true;
+	// 	}
+	// }
+
+	// for (let currentCard: number = 0; currentCard < cards.cardArray.length; currentCard++)
+	// {
+	// 	if (!cards.cardArray[currentCard].skip)
+	// 	{
+	// 		// We also pass config as it has the login details for each financial institution
+	// 		await checkForCreditCardTransactions(cards.cardArray[currentCard], config);
+	// 		if (cards.cardArray[currentCard].closingDate
+	// 			&& typeof cards.cardArray[currentCard].transactionsFound !== "undefined")
+	// 		{
+	// 			config.cards[currentCard].closingDate = cards.cardArray[currentCard].closingDateAsString;
+	// 			config.cards[currentCard].transactionsFound = cards.cardArray[currentCard].transactionsFound;
+	// 			configModified = true;
+	// 		}
+	// 	}
+	// }
+
+	// updateConfigFile(configFilepath, config);
 
 	// outputCardTable(cards.skippedCards(), "After checking for card updates, cards that will not be run");
 
@@ -75,7 +126,7 @@ async function start(): Promise<void>
 	// const mint: Mint = new Mint(config.mint);
 	// loadSitePromises.push(mint.login());
 
-	if (confirmBeforePurchases)
+	if (confirmBeforePurchases && cards.cardsToRun().length > 0)
 	{
 		const answers: Answers = await prompt({
 			type: "confirm",
@@ -86,51 +137,51 @@ async function start(): Promise<void>
 		if (!answers.makePurchases)
 		{
 			// closeBrowsers();
+
 			return;
 		}
 	}
 
 	// const optimum: Optimum = new Optimum(config.optimum, completeTransactions);
-	// await optimum.makePurchases(cards);
-
+	// await optimum.makePurchases(cards.cardsToRun());
 	// outputCardTable(cards.cardsToRun(), "After running Optimum, cards that remain to be run");
 
 	const amazon: Amazon = new Amazon(config.amazon, completeTransactions);
-	await amazon.reloadCards(new Cards(cards.cardsToRun()));
+	await amazon.reloadCards(cards.cardsToRun());
 
 	// closeBrowsers();
-}
+	}
 
 // async function closeBrowsers(): Promise<void>
 // {
-	// if (bankOfAmerica)
-	// {
-	// 	bankOfAmerica.browser.driver.close();
-	// }
-	// if (barclaycardUS)
-	// {
-	// 	barclaycardUS.browser.driver.close();
-	// }
-	// if (discoverPersonal)
-	// {
-	// 	discoverPersonal.browser.driver.close();
-	// }
-	// if (discoverBusiness)
-	// {
-	// 	discoverBusiness.browser.driver.close();
-	// }
-	// if (usBank)
-	// {
-	// 	usBank.browser.driver.close();
-	// }
-	// if (penFed)
-	// {
-	// 	penFed.browser.driver.close();
-	// }
-	// if (capitalOne)
-	// {
-	// 	capitalOne.browser.driver.close();
-	// }
+// 	if (bankOfAmerica)
+// 	{
+// 		bankOfAmerica.driver.close();
+// 	}
+// 	if (barclaycardUS)
+// 	{
+// 		barclaycardUS.driver.close();
+// 	}
+// 	if (discoverPersonal)
+// 	{
+// 		discoverPersonal.driver.close();
+// 	}
+// 	if (discoverBusiness)
+// 	{
+// 		discoverBusiness.driver.close();
+// 	}
+// 	if (usBank)
+// 	{
+// 		usBank.driver.close();
+// 	}
+// 	if (penFed)
+// 	{
+// 		penFed.driver.close();
+// 	}
+// 	if (capitalOne)
+// 	{
+// 		capitalOne.driver.close();
+// 	}
 // }
 
 function outputCardTable(cards: Card[], tableIntroduction?: string): void
@@ -234,37 +285,15 @@ function outputCardTable(cards: Card[], tableIntroduction?: string): void
 // 	}
 // }
 
-// function isSiteCompletedInLastDay(lastCompletedRunString: string): boolean
-// {
-// 	// logger.debug(`lastCompletedRun ${lastCompletedRun}`);
-
-// 	const lastCompletedRun = DateTime.fromISO(lastCompletedRunString);
-
-// 	// let lastCompletedRunDate: DateTime = DateTime.fromISO(lastCompletedRun);
-// 	if (!lastCompletedRun)
-// 	{
-// 		return false;
-// 	}
-// 	logger.debug(`lastCompletedRunDate: ${lastCompletedRun}`);
-
-// 	const today: DateTime = DateTime.local();
-
-// 	const timeSinceLastRun: Duration = today.diff(lastCompletedRun);
-// 	const completedInLastDay: boolean = (timeSinceLastRun.as("days") < 1);
-
-// 	// if (completedInLastDay)
-// 	// {
-// 	// 	logger.info(`Skipping current site as it was last run at ${lastCompletedRunDate}`);
-// 	// }
-
-// 	return completedInLastDay;
-// }
-
 // function updateConfigFile(configFilepath: string, config: any)
 // {
-// 	const spacesInOutput: number = 4;
-// 	const json5string: string = stringify(config, undefined, spacesInOutput);
-// 	writeFileSync(configFilepath, json5string);
+// 	if (configModified)
+// 	{
+// 		const spacesInOutput: number = 4;
+// 		const json5string: string = stringify(config, undefined, spacesInOutput);
+// 		writeFileSync(configFilepath, json5string);
+// 		configModified = false;
+// 	}
 // }
 
 // function now(): string
